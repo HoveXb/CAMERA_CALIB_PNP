@@ -69,38 +69,39 @@ def calib(opt):
     np.save("mtx_LK15.npy", mtx_save)
     np.save("dist_LK15.npy", dist_save)
 
-    undistort_img = opt.undistort
-    if undistort_img:
-        img = cv2.imread(images[0])
-        h, w = img.shape[:2]
+    # undistort_img = opt.undistort
+    # if undistort_img:
+    img = cv2.imread(images[0])
+    h0, w0 = img.shape[:2]
 
-        # If the scaling parameter alpha=0, it returns undistorted image with minimum unwanted pixels.
-        # So it may even remove some pixels at image corners.
-        # If alpha=1, all pixels are retained with some extra black images.
-        # This function also returns an image ROI which can be used to crop the result.
-        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))  # 显示更大范围的图片（正常重映射之后会删掉一部分图像）
+    # If the scaling parameter alpha=0, it returns undistorted image with minimum unwanted pixels.
+    # So it may even remove some pixels at image corners.
+    # If alpha=1, all pixels are retained with some extra black images.
+    # This function also returns an image ROI which can be used to crop the result.
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w0, h0), 1, (w0, h0))  # 图片中的像素都是有效信息
 
-        print("------------------使用undistort函数(newcameramtx)-------------------")
-        dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    print("------------------使用undistort函数(newcameramtx)-------------------")
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
 
-        x, y, w, h = roi
-        dst1 = dst[y:y + h, x:x + w]
-        cv2.imwrite('calibresult1' + f'.{images_format}', dst1)
-        print("Using cv.undistort_img(),dst的大小为:", dst1.shape)
+    x, y, w, h = roi
+    dst1 = dst[y:y + h, x:x + w]
+    cv2.imwrite('calibresult1' + f'.{images_format}', dst1)
+    print("Using cv.undistort_img(),dst的大小为:", dst1.shape)
 
-        print("------------------使用remapping-------------------")
-        mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w, h), 5)
-        dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
-        # crop the image
-        dst2 = dst[y:y + h, x:x + w]
-        print("Using remapping", dst2.shape)
-        cv2.imwrite('calibresult2' + f'.{images_format}', dst2)
+    print("------------------使用remapping-------------------")
+    mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w0, h0), 5)
+    print('111111:',mapx.shape)
+    dst = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
+    # crop the image
+    dst2 = dst[y:y + h, x:x + w]
+    print("Using remapping", dst2.shape)
+    cv2.imwrite('calibresult2' + f'.{images_format}', dst2)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--imgs-source', type=str, default='./LK_R_pic/', help='imgs source')
-    parser.add_argument('--image-format', type=str, default='png', help='imgs source')
+    parser.add_argument('--imgs-source', type=str, default='./123/', help='imgs source')
+    parser.add_argument('--image-format', type=str, default='jpg', help='imgs source')
     parser.add_argument('--width', type=int, default=8, help='how many inner squares there are in the chessboard')
     parser.add_argument('--height', type=int, default=6, help='how many inner squares there are in the chessboard')
     parser.add_argument('--square-size', type=int, default=1, help='square size of chess board(mm)')
@@ -108,3 +109,4 @@ if __name__ == '__main__':
     parser.add_argument('--undistort', action='store_true', help='undistort')
     opt = parser.parse_args()
     calib(opt)
+
